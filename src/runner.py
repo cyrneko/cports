@@ -2145,6 +2145,7 @@ def _collect_git(expr):
     cmd.append(expr)
     # locate the commit list
     revs = git.call(cmd)
+    print(revs)
     if revs is None:
         raise errors.CbuildException(f"failed to resolve commits for '{oexpr}'")
     # collect changed templates
