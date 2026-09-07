@@ -1,6 +1,6 @@
 pkgname = "chromium"
 # https://chromiumdash.appspot.com/releases?platform=Linux
-pkgver = "146.0.7680.164"
+pkgver = "152.0.7977.75"
 pkgrel = 0
 archs = ["aarch64", "ppc64le", "x86_64"]
 configure_args = [
@@ -54,9 +54,11 @@ configure_args = [
 hostmakedepends = [
     "bash",
     "bison",
+    "esbuild",
     "findutils",
     "git",
     "gn",
+    "go",
     "gperf",
     "hwdata",
     "ninja",
@@ -144,7 +146,7 @@ source = [
 ]
 source_paths = [".", "rollup"]
 sha256 = [
-    "ce684e97c122f2fb0d9ccb691c74702cfd67a458b15259547f7093b5251889dc",
+    "727d9c5de03ee30e137ad68f490cdb1d6099e33fb88703027a54797cc2cab713",
     "ee49bf67bd9bee869405af78162d028e2af0fcfca80497404f56b1b99f272717",
 ]
 debug_level = 1
@@ -162,10 +164,6 @@ tool_flags = {
         "-Wno-deprecated-declarations",
         "-Wno-sign-compare",
         "-Wno-shorten-64-to-32",
-        # started crashing in blink and skia with 145.x due to unsafe memcpy
-        # we have a similar issue in webkit with skia, maybe figure it out
-        # there first...
-        "-U_FORTIFY_SOURCE",
     ],
 }
 file_modes = {
@@ -173,7 +171,7 @@ file_modes = {
 }
 hardening = ["!scp"]
 # lol
-options = ["!cross", "!check", "!scanshlibs"]
+options = ["etcfiles", "!cross", "!check", "!scanshlibs"]
 
 match self.profile().arch:
     case "ppc64le" | "riscv64":
@@ -183,9 +181,36 @@ match self.profile().arch:
 
 
 def post_patch(self):
+    # replace wrong node with a working one
     self.rm("third_party/node/linux/node-linux-x64/bin/node", force=True)
     self.mkdir("third_party/node/linux/node-linux-x64/bin", parents=True)
     self.ln_s("/usr/bin/node", "third_party/node/linux/node-linux-x64/bin/node")
+    # replace wrong esbuild with a working one
+    self.rm(
+        "third_party/devtools-frontend/src/third_party/esbuild/esbuild",
+        force=True,
+    )
+    self.ln_s(
+        "/usr/bin/esbuild",
+        "third_party/devtools-frontend/src/third_party/esbuild/esbuild",
+    )
+    self.rm(
+        "third_party/devtools-frontend/src/node_modules/esbuild",
+        recursive=True,
+        force=True,
+    )
+    self.ln_s(
+        "/usr/lib/node_modules/esbuild",
+        "third_party/devtools-frontend/src/node_modules/esbuild",
+    )
+    # replace wrong gperf with a working one
+    self.rm("third_party/gperf/cipd/bin/gperf", force=True)
+    self.ln_s("/usr/bin/gperf", "third_party/gperf/cipd/bin/gperf")
+    # lol
+    self.mkdir("third_party/dawn/tools/golang/linux-unknown/bin", parents=True)
+    self.ln_s(
+        "/usr/bin/go", "third_party/dawn/tools/golang/linux-unknown/bin/go"
+    )
 
     self.cp(self.files_path / "unbundle.sh", ".")
     self.cp(self.files_path / "pp-data.sh", ".")
@@ -213,7 +238,7 @@ def configure(self):
         "flac",
         "fontconfig",
         "freetype",
-        "harfbuzz-ng",
+        "harfbuzz",
         "highway",
         "libjpeg",
         "libpng",
@@ -314,8 +339,6 @@ def install(self):
     self.install_file(f"{srcp}/libvulkan.so.1", dstp, mode=0o755)
     self.install_file(f"{srcp}/libvk_swiftshader.so", dstp, mode=0o755)
     self.install_file(f"{srcp}/vk_swiftshader_icd.json", dstp, mode=0o755)
-    self.install_file(f"{srcp}/xdg-mime", dstp, mode=0o755)
-    self.install_file(f"{srcp}/xdg-settings", dstp, mode=0o755)
 
     self.install_file(f"{srcp}/*.bin", dstp, glob=True)
     self.install_file(f"{srcp}/*.pak", dstp, glob=True)

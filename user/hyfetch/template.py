@@ -1,5 +1,5 @@
 pkgname = "hyfetch"
-pkgver = "2.0.4"
+pkgver = "2.1.0"
 pkgrel = 0
 build_style = "cargo"
 hostmakedepends = ["cargo-auditable"]
@@ -9,7 +9,7 @@ pkgdesc = "Neofetch with pride flags"
 license = "MIT"
 url = "https://github.com/hykilpikonna/hyfetch"
 source = f"{url}/archive/refs/tags/{pkgver}.tar.gz"
-sha256 = "8de8908334470f24dfae5693bd9660360ec8c1074b270f36eac659530e0b35ba"
+sha256 = "23e3600093de3daa60dbbfd1edff258504f41f0fcfcb5537ddff78711b0d2eb2"
 # no test
 options = ["!check"]
 

@@ -1,6 +1,6 @@
 pkgname = "imagemagick"
-pkgver = "7.1.2.8"
-pkgrel = 0
+pkgver = "7.1.2.28"
+pkgrel = 1
 build_style = "gnu_configure"
 configure_args = [
     "--disable-static",
@@ -72,9 +72,9 @@ pkgdesc = "Create, edit, compose, or convert digital images"
 license = "ImageMagick"
 url = "https://www.imagemagick.org"
 source = f"https://github.com/ImageMagick/ImageMagick/archive/{'-'.join(pkgver.rsplit('.', 1))}.tar.gz"
-sha256 = "acf76a9dafbd18f4dd7b24c45ca10c77e31289fc28e4da0ce5cc3929fd0aef16"
+sha256 = "b4a5ec023644fd345f1e22b1ab92af3fb6762dceb56de805dde53b0ce515c481"
 # runs out of file descriptors
-options = ["!cross", "!check"]
+options = ["etcfiles", "!cross", "!check"]
 
 if self.profile().cross:
     hostmakedepends += ["file"]

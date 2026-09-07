@@ -1,5 +1,5 @@
 pkgname = "libgcc-chimera"
-pkgver = "21.1.8"
+pkgver = "22.1.8"
 pkgrel = 0
 build_style = "cmake"
 configure_args = [
@@ -24,7 +24,7 @@ configure_args = [
     # simplifies lookup
     "-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON",
 ]
-hostmakedepends = ["cmake", "ninja", "python", "perl", "clang-tools-extra"]
+hostmakedepends = ["cmake", "ninja", "python", "perl"]
 makedepends = [
     "libffi8-devel",
     "libunwind-devel",
@@ -37,14 +37,15 @@ pkgdesc = "Chimera shim for libgcc runtime compatibility"
 license = "Apache-2.0 WITH LLVM-exception AND NCSA"
 url = "https://llvm.org"
 source = f"https://github.com/llvm/llvm-project/releases/download/llvmorg-{pkgver}/llvm-project-{pkgver}.src.tar.xz"
-sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142"
+sha256 = "922f1817a0df7b1489272d18134ee0087a8b068828f87ac63b9861b1a9965888"
 # shim
 options = ["!check", "!lto"]
 
 cmake_dir = "compiler-rt"
 
 _trip = self.profile().triplet
-_soname = "libgcc_s.so.1"
+_basename = "libgcc_s.so"
+_soname = f"{_basename}.1"
 
 configure_args += [
     f"-DCMAKE_ASM_COMPILER_TARGET={_trip}",
@@ -60,6 +61,8 @@ tool_flags = {
 
 def post_build(self):
     from cbuild.util import compiler
+
+    majver = pkgver.split(".")[0]
 
     # make a libgcc_s.so.1 from the builtins
     cc = compiler.C(self)
@@ -79,7 +82,21 @@ def post_build(self):
         ],
     )
 
+    # linker script means no runtime dep in final binary
+    with open(self.cwd / f"build/{_basename}", "w") as f:
+        f.write(
+            f"INPUT(/usr/lib/clang/{majver}/lib/{_trip}/libclang_rt.builtins.a -lunwind)\n"
+        )
+
 
 def install(self):
     self.install_license("LICENSE.TXT")
+    self.install_lib(f"build/{_basename}")
     self.install_lib(f"build/{_soname}")
+
+
+@subpackage("libgcc-chimera-devel")
+def _(self):
+    self.depends += [self.parent]
+
+    return self.default_devel()
